@@ -1,0 +1,55 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.0.0-SNAPSHOT'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id "net.ltgt.errorprone" version "4.0.0"
+}
+
+group = 'com.shyam.jspecify'
+version = '0.0.1-SNAPSHOT'
+description = 'JSpecify demo to handle NPE in java application'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven { url = 'https://repo.spring.io/snapshot' }
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0' // Use the latest compatible version
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	errorprone "com.google.errorprone:error_prone_core:2.41.0"
+	errorprone "com.uber.nullaway:nullaway:0.12.8"
+}
+
+import net.ltgt.gradle.errorprone.CheckSeverity
+
+tasks.withType(JavaCompile) {
+	options.compilerArgs += ["--should-stop=ifError=FLOW" ]
+	options.errorprone {
+		check("NullAway", CheckSeverity.ERROR)
+		//  You'll also need to tell NullAway which packages to check. For example:
+		//option("NullAway:AnnotatedPackages", "com.shyam.jspecify")
+		// You can specify to consider packages market with @NullAware annotation
+		option("NullAway:OnlyNullMarked", "true")
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
